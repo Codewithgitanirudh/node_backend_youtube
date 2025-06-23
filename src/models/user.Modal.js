@@ -20,6 +20,7 @@ const userModel = {
   },
   avatar: {
     type: String, //cloudinary url
+    required: true,
   },
   coverImage: {
     type: String, //cloudinary url
@@ -41,16 +42,11 @@ const userModel = {
       ref: 'Video',
     },
   ],
-  firstName: {
+  fullName: {
     type: String,
     required: true,
     trim: true,
     index: true,
-  },
-  lastName: {
-    type: String,
-    required: true,
-    trim: true,
   },
 };
 
@@ -59,7 +55,7 @@ const userSchema = new Schema(userModel, { timestamps: true });
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
-  this.password = bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 

@@ -3,13 +3,19 @@ import fs from 'fs';
 
 async function uploadOnCloudinary(localFilePath) {
 
+    cloudinary.config({ 
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+        api_key: process.env.CLOUDINARY_API_KEY, 
+        api_secret: process.env.CLOUDINARY_SECRET_KEY
+    });
+
     try {
         if(!localFilePath) return null;
         //upload the file on cloudinary
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: "auto",
         });
-        console.log(response, "file uploaded successfully");
+        fs.unlinkSync(localFilePath);
         return response;
     } catch (error) {
         console.log(error);
@@ -36,8 +42,4 @@ async function uploadOnCloudinary(localFilePath) {
     // console.log(autoCropUrl);    
 }
 
-cloudinary.config({ 
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
-    api_key: process.env.CLOUDINARY_API_KEY, 
-    api_secret: process.env.CLOUDINARY_API_SECRET
-});
+export default uploadOnCloudinary;
