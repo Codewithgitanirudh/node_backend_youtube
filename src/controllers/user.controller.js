@@ -20,7 +20,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const avatarLocalPath = req.files?.avatar?.[0]?.path;
   const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
-
+  console.log(avatarLocalPath, 'avatarLocalPath');
   if (!avatarLocalPath) {
     throw new ApiError(400, 'Avatar is required');
   }
@@ -78,7 +78,7 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Username or email is required');
   }
 
-  const user = await User.findOne({ $or: [{ username }, { email }] }).select('-password -refreshToken');
+  const user = await User.findOne({ $or: [{ username }, { email }] });
 
   if (!user) {
     throw new ApiError(404, 'User not found');
@@ -112,8 +112,8 @@ const loginUser = asyncHandler(async (req, res) => {
   );
 });
 
-const logoutUser = asyncHandler(async (req, _) => {
-    await User.findbyIdAndUpdate((req.user._id), {
+const logoutUser = asyncHandler( async (req, res) => {
+    await User.findByIdAndUpdate(req.user._id, {
       $set: {
         refreshToken: undefined,
       },

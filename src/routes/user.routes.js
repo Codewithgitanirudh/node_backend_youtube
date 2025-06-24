@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { registerUser, loginUser, logoutUser } from "../controllers/user.controller.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
 import upload from "../middlewares/multer.middleware.js";
 import { verifyAccessToken } from "../middlewares/auth.middleware.js";
 
