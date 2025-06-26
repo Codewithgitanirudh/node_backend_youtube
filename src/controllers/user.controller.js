@@ -224,4 +224,108 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, user, 'Avatar updated successfully'));
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, getCurrentUser, changePassword, updateUser, updateUserAvatar };
+const getUserChannels = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  if (!username.trim()) {
+    throw new ApiError(400, 'Username is required');
+  }
+
+  const channels = await User.aggregate([
+    {
+      $match: { username : username?.toLowerCase() },
+    },
+    {
+      $lookup: {
+        from: 'subscription',
+        localField: '_id',
+        foreignField: 'channel',
+        as: 'subscribers',
+      },
+    },
+    {
+      $lookup: {
+        from: 'subscription',
+        localField: '_id',
+        foreignField: 'subscriber',
+        as: 'subscribedTo',
+      },
+    },
+    {
+      $addFields: {
+        subscribersCount: { $size: '$subscribers' },
+        subscribedToCount: { $size: '$subscribedTo' },
+        isSubscribed: { $in: [req.user._id, '$subscribers.subscriber'] },
+        then: true,
+        else: false,
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        username: 1,
+        subscribersCount: 1,
+        subscribedToCount: 1,
+        isSubscribed: 1,
+        fullName: 1,
+        avatar: 1,
+        coverImage: 1,
+        email: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    }
+  ]);
+
+  console.log(channels, 'channels');
+  return res.status(200).json(new ApiResponse(200, channels[0], 'Channels fetched successfully'));
+});
+
+const getWatchHistory = asyncHandler(async (req, res) => {
+  const user  = await User.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(req.user._id),
+      },
+    },
+    {
+      $lookup: {
+        from: 'video',
+        localField: 'watchHistory',
+        foreignField: '_id',
+        as: 'videos',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'user',
+              localField: 'owner',
+              foreignField: '_id',
+              as: 'owner',
+              pipeline: [
+                {
+                  $project: {
+                    _id: 1,
+                    username: 1,
+                    fullName: 1,
+                    avatar: 1,
+                    coverImage: 1,
+                    createdAt: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: {
+                $first: '$owner',
+              },
+            },
+          }
+        ],
+      },
+    },
+  ])
+  return res.status(200).json(new ApiResponse(200, user[0].watchHistory, 'Watch history fetched successfully'));
+});
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken, getCurrentUser, changePassword, updateUser, updateUserAvatar, getUserChannels, getWatchHistory };
